@@ -34,7 +34,7 @@ func getHeader(dict stringmap) http.Header {
 	return header
 }
 
-func getJar(jar *http.CookieJar, cookies stringmap, link string) {
+func fillJar(jar *http.CookieJar, cookies stringmap, link string) {
 
 	if jar == nil {
 		jar, _ = cookiejar.New(nil)
@@ -51,8 +51,21 @@ func getJar(jar *http.CookieJar, cookies stringmap, link string) {
 
 	/* Check if Setting cookies, removes the cookies that are already present in the jar */
 	jar.SetCookies(linkobj, cs)
+
 }
 
+func process_headers(header stringmap) http.Header {
+
+}
+
+func process_data(date []byte) (bytes.Buffer, error) {
+	var ret bytes.Buffer
+	if data != nil {
+		databytes, err := json.Marshal(data)
+		check_error(err)
+		data_buf = bytes.NewBuffer(databytes)
+	}
+}
 func (h *HelperClient) Httpget(link string, header stringmap, data []byte, cookies stringmap) (http.Request, error) {
 	var headerObj http.Header
 	var data_buf bytes.Buffer
@@ -66,9 +79,18 @@ func (h *HelperClient) Httpget(link string, header stringmap, data []byte, cooki
 		data_buf = bytes.NewBuffer(databytes)
 	}
 	if cookies != nil {
-
+		fillJar(&h.Jar, cookies, link)
 	}
 
+	req, err := http.NewRequest("GET", link, data_buf)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Request creation failed")
+		return nil, err
+	}
+	req.Header = headerObj
+
+	response, err := h.Do(req)
+	return response, err
 }
 
 func (h *HelperClient) Httppost(url string, header stringmap, data []byte, cookies stringmap) (http.Request, error) {
