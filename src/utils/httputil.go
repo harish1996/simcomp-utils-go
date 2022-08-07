@@ -49,7 +49,7 @@ func fillJar(jar http.CookieJar, cookies stringmap, link string) {
 }
 
 func (h *HelperClient) httpRequest(request_type string, link string, header stringmap, data interface{}, cookies stringmap) (*http.Response, error) {
-	var data_buf *bytes.Buffer
+	var data_buf bytes.Buffer
 	var headerobj http.Header
 
 	if header != nil {
@@ -62,16 +62,16 @@ func (h *HelperClient) httpRequest(request_type string, link string, header stri
 			err = fmt.Errorf("Json marshalling failed during request %s: %w", request_type, err)
 			return nil, err
 		}
-		data_buf = bytes.NewBuffer(databytes)
-	} else {
-		data_buf = bytes.NewBuffer(nil)
+		/* Have to use the dereferenced version, instead of the pointer directly, because if data_buf is nil,
+		http.NewRequest is still trying to read from the object, which will cause a segmentation fault */
+		data_buf = *bytes.NewBuffer(databytes)
 	}
 
 	if cookies != nil {
 		fillJar(h.Jar, cookies, link)
 	}
 
-	req, err := http.NewRequest(request_type, link, data_buf)
+	req, err := http.NewRequest(request_type, link, &data_buf)
 	if err != nil {
 		err = fmt.Errorf("Request creation fails during %s: %w", request_type, err)
 		return nil, err
