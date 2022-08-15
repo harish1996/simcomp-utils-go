@@ -1,2 +1,6 @@
 
 *.password
+src/auth_trial
+src/cookiesv2
+src/utils/go_simcomp_cookie.json
+src/go_simcomp_cookie.json
