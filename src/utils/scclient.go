@@ -51,14 +51,15 @@ var Defaultheaders = map[string]string{
 func ReadExistingCookies() ([]*http.Cookie, error) {
 
 	ret := make([]*http.Cookie, 2)
-	fp, err := os.Open("go_simcomp_cookie.json")
+	fname := "go_simcomp_cookie.json"
+	fp, err := os.Open(fname)
 	if err != nil {
 		if errors.Is(err, os.ErrPermission) {
-			return nil, &UnreadableCookie{filename: fp.Name()}
+			return nil, &UnreadableCookie{filename: fname}
 		} else if errors.Is(err, os.ErrNotExist) {
-			return nil, &NoCookieFile{filename: fp.Name()}
+			return nil, &NoCookieFile{filename: fname}
 		} else {
-			err = fmt.Errorf("Reading of file go_simcomp_cookies failed due to %w", err)
+			err = fmt.Errorf("Reading of file %s failed due to %w", fname, err)
 			return nil, err
 		}
 	}
@@ -99,11 +100,7 @@ func getPwd(filename string) string {
 
 func GetNewCookies() ([]*http.Cookie, error) {
 
-	headers := map[string]string{
-		`Referer`:    `https://www.simcompanies.com/`,
-		`Connection`: `keep-alive`,
-		`User-agent`: `Mozilla/5.0 (X11; Linux x86_64; rv:83.0) Gecko/20100101 Firefox/83.0`,
-	}
+	headers := Defaultheaders
 
 	data := map[string]string{
 		/* Shift the email to a config file */
@@ -187,6 +184,7 @@ func GetAuthenticatedSession() (*HelperClient, error) {
 	}
 
 	if get_new_cookie {
+		fmt.Println("Getting new cookies either because there are no existing cookies or because existing ones have expired...")
 		cookies, err = GetNewCookies()
 	}
 
