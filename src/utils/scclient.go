@@ -112,7 +112,7 @@ func GetNewCookies() ([]*http.Cookie, error) {
 
 	client := NewHelperClient()
 
-	response, err := client.Httpget("https://www.simcompanies.com/", nil, nil, nil)
+	response, err := client.Httpget("https://www.simcompanies.com/", nil)
 	if err != nil {
 		err = fmt.Errorf("HTTP GET during New cookie fetch failed due to \n %w", err)
 		return nil, err
@@ -129,7 +129,9 @@ func GetNewCookies() ([]*http.Cookie, error) {
 		}
 	}
 
-	response, err = client.Httppost("https://www.simcompanies.com/api/v2/auth/email/auth/", headers, data, nil)
+	client.AddHeader(headers)
+
+	response, err = client.Httppost("https://www.simcompanies.com/api/v2/auth/email/auth/", data)
 	if err != nil {
 		err = fmt.Errorf("HTTP POST during New cookie fetch failed due to \n %w", err)
 		return nil, err

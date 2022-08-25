@@ -13,11 +13,13 @@ type stringmap map[string]string
 
 type HelperClient struct {
 	http.Client
+	head http.Header
 }
 
 func NewHelperClient() *HelperClient {
 	jar, _ := cookiejar.New(nil)
-	return &HelperClient{Client: http.Client{Jar: jar}}
+	header := make(http.Header)
+	return &HelperClient{Client: http.Client{Jar: jar}, head: header}
 }
 
 func getHeader(dict stringmap) http.Header {
@@ -26,6 +28,14 @@ func getHeader(dict stringmap) http.Header {
 		header.Add(k, v)
 	}
 	return header
+}
+
+func addToHeader(h *http.Header, dict stringmap) {
+	if h != nil {
+		for k, v := range dict {
+			h.Add(k, v)
+		}
+	}
 }
 
 func fillJar(jar http.CookieJar, cookies stringmap, link string) {
@@ -48,13 +58,28 @@ func fillJar(jar http.CookieJar, cookies stringmap, link string) {
 
 }
 
-func (h *HelperClient) httpRequest(request_type string, link string, header stringmap, data interface{}, cookies stringmap) (*http.Response, error) {
-	var data_buf bytes.Buffer
-	var headerobj http.Header
+func (h *HelperClient) ClearHeader() {
+	h.head = make(http.Header)
+}
 
+func (h *HelperClient) AddHeader(header stringmap) {
 	if header != nil {
-		headerobj = getHeader(header)
+		addToHeader(&h.head, header)
 	}
+}
+
+func (h *HelperClient) ClearCookies() {
+	h.Jar, _ = cookiejar.New(nil)
+}
+
+func (h *HelperClient) AddCookies(cookies stringmap, link string) {
+	if cookies != nil {
+		fillJar(h.Jar, cookies, link)
+	}
+}
+
+func (h *HelperClient) httpRequest(request_type string, link string, data interface{}) (*http.Response, error) {
+	var data_buf bytes.Buffer
 
 	if data != nil {
 		databytes, err := json.Marshal(data)
@@ -67,24 +92,20 @@ func (h *HelperClient) httpRequest(request_type string, link string, header stri
 		data_buf = *bytes.NewBuffer(databytes)
 	}
 
-	if cookies != nil {
-		fillJar(h.Jar, cookies, link)
-	}
-
 	req, err := http.NewRequest(request_type, link, &data_buf)
 	if err != nil {
 		err = fmt.Errorf("Request creation fails during %s: %w", request_type, err)
 		return nil, err
 	}
-	req.Header = headerobj
+	req.Header = h.head
 
 	return h.Do(req)
 }
 
-func (h *HelperClient) Httpget(link string, header stringmap, data interface{}, cookies stringmap) (*http.Response, error) {
-	return h.httpRequest("GET", link, header, data, cookies)
+func (h *HelperClient) Httpget(link string, data interface{}) (*http.Response, error) {
+	return h.httpRequest("GET", link, data)
 }
 
-func (h *HelperClient) Httppost(link string, header stringmap, data interface{}, cookies stringmap) (*http.Response, error) {
-	return h.httpRequest("POST", link, header, data, cookies)
+func (h *HelperClient) Httppost(link string, data interface{}) (*http.Response, error) {
+	return h.httpRequest("POST", link, data)
 }
