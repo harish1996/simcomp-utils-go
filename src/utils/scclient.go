@@ -198,6 +198,7 @@ func GetAuthenticatedSession() (*HelperClient, error) {
 
 	client := NewHelperClient()
 	client.Jar.SetCookies(ur, cookies)
+	client.AddHeader(Defaultheaders)
 
 	return client, nil
 }
