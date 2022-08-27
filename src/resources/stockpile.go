@@ -1,9 +1,6 @@
 package resources
 
 import (
-	"encoding/json"
-	"fmt"
-
 	hu "hg33.com/simcomp/utils"
 )
 
@@ -28,27 +25,7 @@ type ResourceUnit struct {
 }
 
 func GetAllResourceCounts() (t []ResourceUnit, err error) {
-
-	c, err := hu.GetAuthenticatedSession()
-	if err != nil {
-		err = fmt.Errorf("Authenticated session creation failed: %w", err)
-		return t, err
-	}
-
-	c.AddHeader(hu.Defaultheaders)
-
-	resp, err := c.Httpget("https://www.simcompanies.com/api/v2/resources/", nil)
-	if err != nil {
-		err = fmt.Errorf("HTTP get failed: %w", err)
-		return t, err
-	}
-
-	decoder := json.NewDecoder(resp.Body)
-	err = decoder.Decode(&t)
-	if err != nil {
-		err = fmt.Errorf("Readall failed \n %w", err)
-		return t, err
-	}
-
-	return t, nil
+	url := "https://www.simcompanies.com/api/v2/resources/"
+	err = hu.AuthFetchFromJSONData(url, &t)
+	return
 }
