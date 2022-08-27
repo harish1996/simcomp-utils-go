@@ -1,7 +1,13 @@
 package main
 
 import (
+	"database/sql"
+	"flag"
 	"fmt"
+	"os"
+	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 
 	tran "hg33.com/simcomp/resources"
 )
@@ -40,21 +46,44 @@ func main() {
 
 	// fmt.Println(cf)
 
-	// res_id := flag.Int("res", 10, "Resource Id")
+	res_id := flag.Int("res", 10, "Resource Id")
 
-	// flag.Parse()
+	flag.Parse()
 
-	// t, _ := tran.ExtractResourceTransactions(*res_id)
-	// for _, v := range t {
-	// 	ti, _ := time.Parse("2006-01-02T15:04:05.000000-07:00", v.Datetime)
-	// 	ti2 := (ti.UnixNano() / 1000000) + 5402
-	// 	fmt.Println(v.Datetime, time.Unix(ti2/1000, 0).UTC())
-	// }
-
-	res, _ := tran.GetAllResourceCounts()
-	for _, v := range res {
+	t, _ := tran.ExtractResourceTransactions(*res_id)
+	for _, v := range t {
 		fmt.Println(v)
 	}
+
+	res, err := tran.GetAllResourceCounts()
+
+	if err != nil {
+		fmt.Printf("Error %w", err)
+		os.Exit(3)
+	}
+	var aero tran.ResourceUnit
+
+	for _, v := range res {
+		if v.Kind.Db_letter == 100 {
+			aero = v
+		}
+	}
+
+	db, err := sql.Open("sqlite3", "./transactions.db")
+	if err != nil {
+		fmt.Printf("Error %w", err)
+		os.Exit(1)
+	}
+
+	defer db.Close()
+
+	stmt := "insert into aerospace_research_stock values( ?, ?, ?, ?, ?, ?, ?, ?, ? )"
+
+	_, err = db.Exec(stmt, aero.Id, time.Now().String(), aero.Amount, aero.Quality, aero.Cost.Workers, aero.Cost.Admin, aero.Cost.Material1, aero.Cost.Material2, aero.Cost.Market)
 	// fmt.Println(t)
+	if err != nil {
+		fmt.Printf("Error %w", err)
+		os.Exit(2)
+	}
 
 }
