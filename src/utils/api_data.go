@@ -8,13 +8,42 @@ import (
 
 var auth_req *HelperClient
 
-// var noauth *HelperClient
+var noauth *HelperClient
 
-func AuthFetchFromJSONData(url string, out interface{}) error {
+func fetchFromJSONData(client *HelperClient, url string, out interface{}) error {
+
+	if client == nil {
+		return fmt.Errorf("Client is empty")
+	}
 
 	if reflect.ValueOf(out).Kind() != reflect.Ptr {
 		return fmt.Errorf("out should be a pointer type.")
 	}
+
+	resp, err := client.Httpget(url, nil)
+	if err != nil {
+		return fmt.Errorf("HTTP get failed: %w", err)
+	}
+
+	decoder := json.NewDecoder(resp.Body)
+	err = decoder.Decode(out)
+	if err != nil {
+		return fmt.Errorf("Readall failed \n %w", err)
+	}
+
+	return nil
+}
+
+func NoAuthFetchFromJSONData(url string, out interface{}) error {
+
+	if noauth == nil {
+		noauth = NewHelperClient()
+	}
+
+	return fetchFromJSONData(noauth, url, out)
+}
+
+func AuthFetchFromJSONData(url string, out interface{}) error {
 
 	/*
 		Did I suddenly turn into a new leaf and decide to declare this err explicitly ?
@@ -40,16 +69,5 @@ func AuthFetchFromJSONData(url string, out interface{}) error {
 		}
 	}
 
-	resp, err := auth_req.Httpget(url, nil)
-	if err != nil {
-		return fmt.Errorf("HTTP get failed: %w", err)
-	}
-
-	decoder := json.NewDecoder(resp.Body)
-	err = decoder.Decode(out)
-	if err != nil {
-		return fmt.Errorf("Readall failed \n %w", err)
-	}
-
-	return nil
+	return fetchFromJSONData(auth_req, url, out)
 }

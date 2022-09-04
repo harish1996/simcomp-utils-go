@@ -21,30 +21,6 @@ type cashflow struct {
 }
 
 func main() {
-	// c, err := hu.GetAuthenticatedSession()
-	// if err != nil {
-	// 	fmt.Printf("Authenticated session creation failed: %w", err)
-	// 	os.Exit(1)
-	// }
-
-	// c.AddHeader(hu.Defaultheaders)
-
-	// resp, err := c.Httpget("https://www.simcompanies.com/api/v2/companies/me/cashflow/recent/", nil)
-	// if err != nil {
-	// 	fmt.Printf("HTTP get failed: %w", err)
-	// 	os.Exit(2)
-	// }
-
-	// var cf cashflow
-
-	// decoder := json.NewDecoder(resp.Body)
-	// err = decoder.Decode(&cf)
-	// if err != nil {
-	// 	fmt.Printf("Readall failed \n %w", err)
-	// 	os.Exit(3)
-	// }
-
-	// fmt.Println(cf)
 
 	res_id := flag.Int("res", 10, "Resource Id")
 
