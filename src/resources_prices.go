@@ -1,13 +1,12 @@
 package main
 
 import (
-	"database/sql"
-	"errors"
 	"flag"
 	"fmt"
 	"os"
 
 	_ "github.com/mattn/go-sqlite3"
+	dbtools "hg33.com/simcomp/db"
 	res "hg33.com/simcomp/resources"
 )
 
@@ -20,24 +19,13 @@ func main() {
 	// t, _ := res.ExtractPriceList(*res_id)
 	t, _ := res.GetMaterialList()
 
-	// fmt.Printf("%v", t)
-
-	files, err := os.Open(*db_file)
+	err := dbtools.CreateDBFileQuiet(*db_file)
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			files, err = os.Create(*db_file)
-			if err != nil {
-				fmt.Printf("Cant create %s due to %w", *db_file, err)
-				os.Exit(1)
-			}
-		} else {
-			fmt.Println("Something else")
-			os.Exit(2)
-		}
+		fmt.Println("Create DB File failed due to %w", err)
+		os.Exit(1)
 	}
-	files.Close()
 
-	db, err := sql.Open("sqlite3", *db_file)
+	db, err := dbtools.OpenDB(*db_file)
 
 	// for _, v := range t {
 	// 	v.Name = strings.Trim(strings.ReplaceAll(strings.ReplaceAll(strings.ToLower(v.Name), " ", "_"), "-", "_"), " \n\t\r")
@@ -52,24 +40,17 @@ func main() {
 
 	for _, v := range t {
 		v.Name = res.CanonicalizeName(v.Name)
-		result, err := db.Query(fmt.Sprintf("pragma table_info('%s')", v.Name))
-		if err != nil {
-			fmt.Println("Query failed for some reason %w", err)
-			os.Exit(2)
+		isexist := db.IsTableExists(v.Name)
+		if isexist != nil {
+			fmt.Printf("%s doesnt exist \n %w", v.Name, isexist)
+		} else {
+			fmt.Println(v.Name, "Exists")
 		}
-
-		for result.Next() {
-			var arg1, arg2, arg3, arg4, arg5, arg6 interface{}
-			err = result.Scan(&arg1, &arg2, &arg3, &arg4, &arg5, &arg6)
-			if err != nil {
-				fmt.Println("Scan failed due to %w", err)
-				os.Exit(3)
-			}
-			fmt.Println(arg1, arg2, arg3, arg4, arg5, arg6)
-		}
-
-		result.Close()
 	}
+
+	sche := []dbtools.DataAndType{{"name", "text"}, {"q0", "real"}}
+
+	_ = db.CreateTable("newtable", &sche)
 
 	db.Close()
 }
